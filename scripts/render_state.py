@@ -32,10 +32,10 @@ from pathlib import Path
 SECTIONS: tuple[str, ...] = ("active", "pending", "blocked", "conventions")
 
 SECTION_HEADINGS: dict[str, str] = {
-    "active": "En curso",
-    "pending": "Pendientes",
-    "blocked": "Bloqueado (espera a una persona o a infraestructura)",
-    "conventions": "Convenciones vigentes",
+    "active": "In progress",
+    "pending": "Pending",
+    "blocked": "Blocked (waiting on a person or on infrastructure)",
+    "conventions": "Conventions in force",
 }
 
 # A fragment's frontmatter is a deliberately tiny YAML subset: `key: value`,
@@ -91,14 +91,14 @@ def _split_frontmatter(path: Path) -> tuple[dict[str, str], str]:
     raw = path.read_text(encoding="utf-8")
     match = _FRONTMATTER_RE.match(raw)
     if match is None:
-        raise RenderError([f"{path}: falta el frontmatter (--- ... ---) al inicio"])
+        raise RenderError([f"{path}: missing frontmatter (--- ... ---) at the top"])
     front: dict[str, str] = {}
     for line in match.group(1).splitlines():
         if not line.strip() or line.lstrip().startswith("#"):
             continue
         key_match = _KEY_RE.match(line.strip())
         if key_match is None:
-            raise RenderError([f"{path}: línea de frontmatter inválida: {line!r}"])
+            raise RenderError([f"{path}: invalid frontmatter line: {line!r}"])
         value = key_match.group(2).strip()
         if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
             value = value[1:-1]
@@ -112,30 +112,30 @@ def _parse_fragment(path: Path, section: str) -> Fragment:
 
     ident = front.get("id", "")
     if not ident:
-        problems.append(f"{path}: falta `id`")
+        problems.append(f"{path}: missing `id`")
     elif ident != path.stem:
-        problems.append(f"{path}: `id` ({ident}) debe coincidir con el nombre del archivo ({path.stem})")
+        problems.append(f"{path}: `id` ({ident}) must match the filename ({path.stem})")
 
     declared = front.get("section", "")
     if declared != section:
-        problems.append(f"{path}: `section` ({declared or 'ausente'}) debe ser `{section}`, como su carpeta")
+        problems.append(f"{path}: `section` ({declared or 'missing'}) must be `{section}`, like its folder")
 
     title = front.get("title", "")
     if not title:
-        problems.append(f"{path}: falta `title`")
+        problems.append(f"{path}: missing `title`")
 
     updated_raw = front.get("updated", "")
     updated: date | None = None
     if not _ISO_DATE_RE.match(updated_raw):
-        problems.append(f"{path}: `updated` debe ser una fecha ISO (YYYY-MM-DD), no {updated_raw!r}")
+        problems.append(f"{path}: `updated` must be an ISO date (YYYY-MM-DD), not {updated_raw!r}")
     else:
         try:
             updated = date.fromisoformat(updated_raw)
         except ValueError:
-            problems.append(f"{path}: `updated` no es una fecha real: {updated_raw!r}")
+            problems.append(f"{path}: `updated` is not a real date: {updated_raw!r}")
 
     if not body:
-        problems.append(f"{path}: el cuerpo está vacío — un ítem sin cuerpo no le sirve a nadie")
+        problems.append(f"{path}: the body is empty - an item with no body helps nobody")
 
     if problems or updated is None:
         raise RenderError(problems)
@@ -149,7 +149,7 @@ def _load_fragments(root: Path) -> list[Fragment]:
     for section in SECTIONS:
         directory = root / "docs" / "agent" / "state" / section
         if not directory.is_dir():
-            problems.append(f"falta la carpeta {directory}")
+            problems.append(f"missing folder {directory}")
             continue
         for path in sorted(directory.glob("*.md")):
             try:
@@ -158,7 +158,7 @@ def _load_fragments(root: Path) -> list[Fragment]:
                 problems.extend(exc.problems)
                 continue
             if fragment.ident in seen:
-                problems.append(f"{path}: `id` duplicado, ya usado por {seen[fragment.ident]}")
+                problems.append(f"{path}: duplicate `id`, already used by {seen[fragment.ident]}")
                 continue
             seen[fragment.ident] = path
             fragments.append(fragment)
@@ -177,10 +177,10 @@ def _load_log(root: Path) -> list[LogEntry]:
         front, _ = _split_frontmatter(path)
         summary = front.get("summary", "")
         if not summary:
-            problems.append(f"{path}: falta `summary` en el frontmatter")
+            problems.append(f"{path}: missing `summary` in the frontmatter")
         stamp = path.name[:10]
         if not _ISO_DATE_RE.match(stamp):
-            problems.append(f"{path}: el nombre debe empezar con YYYY-MM-DD")
+            problems.append(f"{path}: the filename must start with YYYY-MM-DD")
             continue
         entries.append(
             LogEntry(slug=path.stem, day=date.fromisoformat(stamp), summary=summary, path=path)
@@ -194,14 +194,14 @@ def _load_log(root: Path) -> list[LogEntry]:
 def _load_status(root: Path) -> dict[str, str]:
     path = root / "docs" / "agent" / "state" / "status.yaml"
     if not path.is_file():
-        raise RenderError([f"falta {path}"])
+        raise RenderError([f"missing {path}"])
     status: dict[str, str] = {}
     for line in path.read_text(encoding="utf-8").splitlines():
         if not line.strip() or line.lstrip().startswith("#"):
             continue
         match = _KEY_RE.match(line.strip())
         if match is None:
-            raise RenderError([f"{path}: línea inválida: {line!r}"])
+            raise RenderError([f"{path}: invalid line: {line!r}"])
         value = match.group(2).strip()
         if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
             value = value[1:-1]
@@ -226,9 +226,9 @@ def _live_facts(root: Path) -> list[str]:
     head = _run(["git", "rev-parse", "--short", "HEAD"], root)
     branch = _run(["git", "rev-parse", "--abbrev-ref", "HEAD"], root)
     if head and branch:
-        lines.append(f"- **Checkout:** `{branch}` en `{head}`")
+        lines.append(f"- **Checkout:** `{branch}` at `{head}`")
     else:
-        lines.append("- **Checkout:** no disponible")
+        lines.append("- **Checkout:** unavailable")
 
     prs = _run(
         ["gh", "pr", "list", "--state", "open", "--limit", "20",
@@ -237,22 +237,22 @@ def _live_facts(root: Path) -> list[str]:
         root,
     )
     if prs:
-        lines.append("- **PRs abiertos:**")
+        lines.append("- **Open PRs:**")
         lines.extend(prs.splitlines())
     else:
-        lines.append("- **PRs abiertos:** no disponible (¿`gh` sin auth?)")
+        lines.append("- **Open PRs:** unavailable (is `gh` authenticated?)")
     return lines
 
 
 def _render_state(status: dict[str, str], fragments: list[Fragment], log: list[LogEntry], root: Path) -> str:
     lines = [
-        f"# {status.get('project', 'Proyecto')} — estado",
+        f"# {status.get('project', 'Project')} - state",
         "",
-        "GENERADO. No editar: los cambios se pierden en el próximo render.",
-        "Se regenera con `python scripts/render_state.py`.",
-        "Las fuentes son `docs/agent/state/` (un archivo por ítem) y `docs/agent/log/`.",
+        "GENERATED. Do not edit: changes are lost on the next render.",
+        "Regenerate with `python scripts/render_state.py`.",
+        "Sources: `docs/agent/state/` (one file per item) and `docs/agent/log/`.",
         "",
-        "## Contexto",
+        "## Context",
         "",
     ]
     for key, value in status.items():
@@ -262,7 +262,7 @@ def _render_state(status: dict[str, str], fragments: list[Fragment], log: list[L
     lines.extend(_live_facts(root))
 
     if log:
-        lines.extend(["", "## Últimas sesiones", ""])
+        lines.extend(["", "## Latest sessions", ""])
         for entry in log[:10]:
             lines.append(f"- **{entry.day.isoformat()}** — [{entry.slug}](log/{entry.slug}.md): {entry.summary}")
 
@@ -271,12 +271,12 @@ def _render_state(status: dict[str, str], fragments: list[Fragment], log: list[L
         items.sort(key=lambda item: (-item.updated.toordinal(), item.ident))
         lines.extend(["", f"## {SECTION_HEADINGS[section]}", ""])
         if not items:
-            lines.append("_Nada._")
+            lines.append("_None._")
             continue
         for item in items:
             lines.append(f"### {item.title}")
             lines.append("")
-            lines.append(f"_Actualizado {item.updated.isoformat()} · `{item.path.name}`_")
+            lines.append(f"_Updated {item.updated.isoformat()} - `{item.path.name}`_")
             lines.append("")
             lines.append(item.body)
             lines.append("")
@@ -285,11 +285,11 @@ def _render_state(status: dict[str, str], fragments: list[Fragment], log: list[L
 
 def _render_log_index(log: list[LogEntry]) -> str:
     lines = [
-        "# Historial de sesiones",
+        "# Session history",
         "",
-        "GENERADO. No editar. Las entradas son inmutables: si algo cambió, entrada nueva.",
+        "GENERATED. Do not edit. Entries are immutable: if something changed, write a new one.",
         "",
-        "| Fecha | Entrada | Resumen |",
+        "| Date | Entry | Summary |",
         "| --- | --- | --- |",
     ]
     for entry in log:
@@ -300,7 +300,7 @@ def _render_log_index(log: list[LogEntry]) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true", help="validar sin escribir")
+    parser.add_argument("--check", action="store_true", help="validate without writing")
     args = parser.parse_args()
 
     root = Path(__file__).resolve().parent.parent

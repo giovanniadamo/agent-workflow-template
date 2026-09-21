@@ -1,2 +1,2 @@
-Ver [AGENTS.md](AGENTS.md) — es el contrato único de este repo para agentes de IA.
-No dupliques reglas acá: este archivo es sólo un puntero.
+See [AGENTS.md](AGENTS.md) - the single contract for AI agents in this repo.
+Do not duplicate rules here: this file is only a pointer.

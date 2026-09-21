@@ -1,136 +1,150 @@
-# Template: trabajo multi-dev + multi-IA
+# Template: multi-dev + multi-AI workflow
 
-Esqueleto para arrancar un repo donde van a trabajar **varias personas y varios
-agentes de IA** (Codex, Claude Code, Cursor, Gemini) sin pisarse.
+**English** · [Español](README.es.md)
 
-No es un framework ni trae dependencias. Son cuatro archivos de convención y un
-script de ~250 líneas de stdlib.
+A skeleton for repos where **several people and several AI agents** (Codex,
+Claude Code, Cursor, Gemini) work at the same time without stepping on each
+other.
 
-## El problema que resuelve
+Not a framework, no dependencies. Four convention files and a ~250-line
+standard-library script.
 
-Cuando el estado del proyecto vive en un markdown que todos editan, cada rama
-choca contra cada rama. No es falta de disciplina: es geometría — todos escriben
-en el mismo lugar del mismo archivo.
+## The problem it solves
 
-Acá el estado vive en **muchos archivos chicos, uno por ítem**, y la vista
-agregada (`docs/agent/STATE.md`) se **genera** y no se versiona. Dos agentes que
-trabajan cosas distintas tocan archivos distintos, y git mergea solo.
+When the project's state lives in one markdown file that everybody edits, every
+branch collides with every other branch. This is not a discipline problem, it is
+geometry: everyone writes in the same place in the same file.
 
-## Cómo se usa en un proyecto nuevo
+Here the state lives in **many small files, one per item**, and the aggregate
+view (`docs/agent/STATE.md`) is **generated and never committed**. Two agents
+working on different things touch different files, and git merges them on its
+own.
 
-**1. Copiá el esqueleto** a tu repo (sin `.git`):
+## Using it in a new project
+
+**1. Start from the template** — on GitHub, *Use this template*, or:
 
 ```bash
-git clone <url-de-este-template> /tmp/tpl
+git clone https://github.com/giovanniadamo/agent-workflow-template /tmp/tpl
 rm -rf /tmp/tpl/.git
-cp -r /tmp/tpl/. mi-proyecto/
+cp -r /tmp/tpl/. my-project/
 ```
 
-**2. Pedile a tu agente que lo adapte.** Este prompt alcanza:
+**2. Have your agent adapt it.** This prompt is enough:
 
-> Este repo trae el template de trabajo multi-agente. Leé `AGENTS.md` y
-> `docs/agent/`. Adaptalos a este proyecto: completá `docs/agent/state/status.yaml`,
-> reemplazá los comandos de `AGENTS.md` por los reales de este stack, borrá los
-> fragments de ejemplo (`EJEMPLO-*`) y la entrada de log de ejemplo, y creá los
-> fragments de `pending/` que correspondan a lo que falta hacer. Después corré
-> `python scripts/render_state.py` y confirmá que sale 0.
+> This repo ships the multi-agent workflow template. Read `AGENTS.md` and
+> `docs/agent/`. Adapt them to this project: fill in
+> `docs/agent/state/status.yaml`, replace the commands in `AGENTS.md` with this
+> stack's real ones, delete the `EXAMPLE-*` fragments and the example log entry,
+> and create the `pending/` fragments for what still has to be done. Then run
+> `python scripts/render_state.py` and confirm it exits 0.
 
-**3. Verificá** que el ciclo cierra:
+**3. Check that the loop closes:**
 
 ```bash
-python scripts/render_state.py   # debe salir 0
+python scripts/render_state.py   # must exit 0
 cat docs/agent/STATE.md
 ```
 
-Listo. A partir de ahí ningún agente necesita que le pases nada: su herramienta
-lee el contrato sola al abrir el repo.
+That is it. From then on no agent needs anything handed to it: its tool reads
+the contract on its own when it opens the repo.
 
-## Por qué funciona con cualquier herramienta
+## Why it works with any tool
 
-`AGENTS.md` es el **único** contenido. El resto son punteros de una línea:
+`AGENTS.md` is the **only** real content. The rest are one-line pointers:
 
-| Archivo | Lo lee |
+| File | Read by |
 | --- | --- |
-| `AGENTS.md` | Codex y varios agentes |
+| `AGENTS.md` | Codex and several agents |
 | `CLAUDE.md` | Claude Code |
 | `.cursor/rules` | Cursor |
 | `GEMINI.md` | Gemini CLI |
 
-Un dev que usa otra herramienta **no configura nada**: clona el repo y su
-agente ya está bajo el mismo contrato. Si mañana aparece una herramienta nueva,
-se agrega un puntero más — nunca una segunda copia de las reglas.
+A developer using a different tool **configures nothing**: they clone the repo
+and their agent is already under the same contract. When a new tool shows up you
+add one more pointer — never a second copy of the rules.
 
-## Qué hay adentro
+## What is inside
 
 ```
-AGENTS.md                     contrato para agentes (el único contenido real)
+AGENTS.md                     the agent contract (the only real content)
 CLAUDE.md / GEMINI.md
-.cursor/rules                 punteros de una línea
-.gitattributes                LF: devs Windows + CI Linux
-.gitignore                    las vistas generadas NO se versionan
+.cursor/rules                 one-line pointers
+.gitattributes                LF: Windows devs + Linux CI
+.gitignore                    the generated views are NOT committed
 
 docs/agent/
-  state/                      ESTADO VIVO — un archivo por ítem
-    status.yaml               invariantes del proyecto
-    active/                   en curso (y las reservas de archivos)
-    pending/                  cola, cada ítem con su criterio de salida
-    blocked/                  espera a una persona o a infraestructura
-    conventions/              decisiones vigentes
-  log/                        HISTORIA INMUTABLE — YYYY-MM-DD-slug.md
-  STATE.md                    GENERADO — gitignoreado, nadie lo edita
+  state/                      LIVE STATE — one file per item
+    status.yaml               project invariants
+    active/                   in progress (and file reservations)
+    pending/                  queue, each item with its exit criterion
+    blocked/                  waiting on a person or on infrastructure
+    conventions/              decisions in force
+  log/                        IMMUTABLE HISTORY — YYYY-MM-DD-slug.md
+  STATE.md                    GENERATED — gitignored, nobody edits it
 
-scripts/render_state.py       el generador (stdlib, sin instalar nada)
-.github/workflows/            el check que hace que la convención se cumpla
+scripts/render_state.py       the generator (stdlib, nothing to install)
+.github/workflows/            the check that makes the convention stick
 ```
 
-## Las tres decisiones que no conviene cambiar
+## Three decisions worth keeping
 
-**1. La vista se genera y no se versiona.** Si la agregás al repo, vuelven los
-conflictos que todo esto existe para evitar. El CI lo verifica.
+**1. The view is generated and never committed.** Commit it and you bring back
+the conflicts this whole design exists to avoid. CI enforces it.
 
-**2. El generador falla cerrado.** Ante cualquier error borra las salidas y sale
-1. El contrato dice: *si no sale 0, no leas `STATE.md`*. Una vista a medias leída
-como verdad es el modo de falla más caro, porque parece dato bueno.
+**2. The generator fails closed.** On any error it deletes its outputs and exits
+1. The contract says: *if it does not exit 0, do not read `STATE.md`*. A
+half-written view read as truth is the most expensive failure mode, because it
+looks like good data.
 
-**3. Los datos volátiles no se escriben.** SHAs, PRs y ramas se consultan al
-generar. Un puntero escrito a mano envejece en horas y alguien decide con él.
+**3. Volatile facts are queried, not stored.** SHAs, PRs and branches are read at
+render time. A pointer written by hand goes stale in hours, and somebody makes a
+decision with it.
 
-## Cerrar un ítem es borrar su archivo
+## Closing an item means deleting its file
 
-No se tacha, no se marca "LISTO" dejando el texto abajo. Se borra el fragmento y
-se escribe una entrada en `log/`. Hay que decirlo explícito porque el reflejo de
-todo agente es *agregar*: si no lo prohibís, en dos meses tenés 58 ítems
-"activos" de los cuales 36 cerraron hace semanas.
+You do not strike it through or mark it "DONE" leaving the text behind. You
+delete the fragment and write an entry in `log/`. This has to be said out loud
+because every agent's reflex is to *add*: without the rule, in two months you
+have 58 "active" items of which 36 closed weeks ago.
 
-## Para el equipo
+## For your team
 
-Pegá esto en el README de tu proyecto:
+Paste this into your project's README:
 
 ```markdown
-## Trabajo con agentes de IA
-El contrato vive en AGENTS.md (tu herramienta lo lee sola).
-Antes de trabajar:  python scripts/render_state.py  → leé docs/agent/STATE.md
-Al cerrar: entrada en docs/agent/log/ + actualizá docs/agent/state/.
-Todo entra por PR. Nadie edita STATE.md: se genera.
+## Working with AI agents
+The contract lives in AGENTS.md (your tool reads it on its own).
+Before you work:  python scripts/render_state.py  → read docs/agent/STATE.md
+When you finish: an entry in docs/agent/log/ + update docs/agent/state/.
+Everything lands through a PR. Nobody edits STATE.md: it is generated.
 ```
 
-## Qué agregar después
+## What to add later
 
-El esqueleto cubre el estado compartido. Cuando el proyecto crezca:
+The skeleton covers shared state. As the project grows:
 
-- **Specs con aprobación humana** antes de implementar. Con varios agentes en
-  paralelo es lo que más rinde: sin propuesta aprobada, dos agentes resuelven el
-  mismo problema en dos direcciones incompatibles.
-- **Revisión del propio diff** antes de pedir revisión humana.
-- **Checks para cada convención que importe.** Sin verificación, una convención
-  es una sugerencia.
+- **Specs approved by a human** before implementing. With several agents in
+  parallel this is what pays off most: without an approved proposal, two agents
+  solve the same problem in two incompatible directions.
+- **Reviewing your own diff** before asking for human review.
+- **A check for every convention that matters.** Without verification, a
+  convention is a suggestion.
 
-## Licencia
+## Language
 
-MIT — usalo, copialo y adaptalo libremente, en proyectos propios o de tu empresa.
+The template ships in English so it is usable by any team. Both the contract and
+the fragments are meant to be **translated into your team's language** — the
+agents work equally well either way, and `README.es.md` is the Spanish version of
+this file.
 
-## Contribuir
+## License
 
-Si lo usaste y algo no encajó en tu stack, un issue con el caso concreto vale
-más que una sugerencia general: este esqueleto salió de modos de falla reales,
-y así es como sigue creciendo.
+MIT — use it, copy it and adapt it freely, in your own or your company's
+projects.
+
+## Contributing
+
+If you used it and something did not fit your stack, an issue with the concrete
+case is worth more than a general suggestion: this skeleton came out of real
+failure modes, and that is how it keeps growing.

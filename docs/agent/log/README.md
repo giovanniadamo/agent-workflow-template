@@ -1,7 +1,7 @@
-# Historial de sesiones
+# Session history
 
-Una entrada por sesión o PR: `YYYY-MM-DD-<slug>.md`, con `summary:` en el
-frontmatter. **Inmutables**: si algo cambió, entrada nueva — nunca se edita una
-vieja. Eso es lo que hace que varias ramas puedan escribir acá sin chocar.
+One entry per session or PR: `YYYY-MM-DD-<slug>.md`, with `summary:` in the
+frontmatter. **Immutable**: if something changed, write a new entry — never edit
+an old one. That is what lets several branches write here without colliding.
 
-`INDEX.md` se **genera** (`python scripts/render_state.py`) y no se versiona.
+`INDEX.md` is **generated** (`python scripts/render_state.py`) and not committed.

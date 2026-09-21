@@ -1,8 +1,8 @@
-# Verifica el contrato de estado en cada PR.
+# Verifies the state contract on every PR.
 #
-# Esto es lo que hace que la convención se cumpla de verdad: un agente puede
-# ignorar AGENTS.md, pero no puede ignorar un check rojo. Si esta convención
-# importa, tiene un check; si no lo tiene, en dos meses nadie la sigue.
+# This is what actually makes the convention stick: an agent can ignore
+# AGENTS.md, but it cannot ignore a red check. If a convention matters it has a
+# check; without one, in two months nobody follows it.
 name: agent-state
 
 on:
@@ -19,51 +19,50 @@ jobs:
         with:
           python-version: '3.11'
 
-      # Sin dependencias: el generador es stdlib puro a propósito.
-      - name: Validar fragments y generar la vista
+      # No dependencies: the generator is pure stdlib on purpose.
+      - name: Validate fragments and render the view
         run: python scripts/render_state.py
 
-      # La vista es generada: si alguien la commitea, vuelven los conflictos
-      # que todo este diseño existe para evitar.
-      - name: Las vistas generadas no se versionan
+      # The view is generated: committing it brings back the very conflicts
+      # this design exists to avoid.
+      - name: Generated views must not be committed
         run: |
           for f in docs/agent/STATE.md docs/agent/log/INDEX.md; do
             if git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
-              echo "::error::$f está versionado. Sacalo del repo y dejalo en .gitignore."
+              echo "::error::$f is committed. Remove it from the repo and keep it gitignored."
               exit 1
             fi
           done
 
-      # Un PR que toca codigo y no deja rastro en la memoria del proyecto es
-      # trabajo que el proximo agente no va a encontrar.
+      # A PR that touches code and leaves no trace in the project's memory is
+      # work the next agent will never find.
       #
-      # La regla se define por NEGACION a proposito: "cambiaste algo que no es
-      # documentacion ni configuracion". Asi funciona en cualquier estructura de
-      # carpetas sin que nadie tenga que configurar una lista de rutas — que es
-      # justo el tipo de configuracion que nadie actualiza y termina volviendo
-      # el check inutil sin que se note.
-      - name: Cada PR con cambios reales deja registro
+      # The rule is defined by NEGATION on purpose: "you changed something that
+      # is not documentation or configuration". That works on any folder layout
+      # with no path list to configure - and a path list is exactly the kind of
+      # config nobody updates, which quietly turns the check into a no-op.
+      - name: Every PR with real changes leaves a record
         if: github.event_name == 'pull_request'
         run: |
           git fetch --depth=1 origin "${{ github.base_ref }}"
           CHANGED=$(git diff --name-only "origin/${{ github.base_ref }}"...HEAD)
 
-          # Lo que NO cuenta como cambio real: docs, el propio estado del
-          # agente, y archivos de raiz tipo README/LICENSE/.gitignore.
+          # What does NOT count as a real change: docs, the agent state itself,
+          # and root-level files such as README/LICENSE/.gitignore.
           REAL=$(echo "$CHANGED" | grep -vE '^(docs/|\.github/|[^/]*\.(md|txt|cfg|ini|toml|ya?ml|json|lock)$|\.[^/]*$)' || true)
 
           if [ -z "$REAL" ]; then
-            echo "Sin cambios de codigo: no se exige entrada de log."
+            echo "No code changes: no log entry required."
             exit 0
           fi
 
           if echo "$CHANGED" | grep -qE '^docs/agent/log/[0-9]{4}-[0-9]{2}-[0-9]{2}-.*\.md$'; then
-            echo "OK: el PR trae entrada de log."
+            echo "OK: the PR includes a log entry."
             exit 0
           fi
 
-          echo "::error::Este PR cambia codigo y no agrega una entrada en docs/agent/log/."
-          echo "Archivos que lo disparan:"
+          echo "::error::This PR changes code and adds no entry under docs/agent/log/."
+          echo "Files that trigger this:"
           echo "$REAL" | sed 's/^/  - /'
-          echo "Ver AGENTS.md, seccion 'Al cerrar una sesion o un PR'."
+          echo "See AGENTS.md, section 'Finishing a session or a PR'."
           exit 1

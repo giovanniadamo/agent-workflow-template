@@ -1,117 +1,120 @@
-# AGENTS.md — contrato para agentes de IA en este repo
+# AGENTS.md — contract for AI agents in this repo
 
-Este archivo es el contrato **único** para cualquier agente (Codex, Claude Code,
-Cursor, Gemini u otro). `CLAUDE.md`, `.cursor/rules` y `GEMINI.md` sólo apuntan
-acá — no dupliques contenido en ellos.
+This file is the **single** contract for any agent (Codex, Claude Code, Cursor,
+Gemini or another). `CLAUDE.md`, `.cursor/rules` and `GEMINI.md` only point
+here — never duplicate content into them.
 
-> Adaptá este archivo a tu proyecto. Lo que está entre `<...>` hay que
-> reemplazarlo. Lo que no aplique, borralo: un contrato con reglas muertas
-> enseña que las reglas son decorativas.
+> Adapt this file to your project. Replace anything in `<...>`. Delete what does
+> not apply: a contract carrying dead rules teaches that rules are decorative.
+>
+> **Language:** this ships in English so any team can use it. Translating it into
+> your team's language is expected and encouraged — agents follow it equally well
+> either way. Keep one language per repo.
 
-## Al iniciar una sesión
+## Starting a session
 
 ```bash
 python scripts/render_state.py
 ```
 
-- **Sale 0** → leé `docs/agent/STATE.md`. Ese es el estado del proyecto.
-- **Sale distinto de 0** → **no leas `STATE.md`**: está borrado o viejo. Arreglá
-  los fragments que el error nombra, o avisá. Nunca trabajes sobre un estado
-  que no se pudo generar.
+- **Exit 0** → read `docs/agent/STATE.md`. That is the project's state.
+- **Non-zero exit** → **do not read `STATE.md`**: it has been deleted or is
+  stale. Fix the fragments named in the error, or say so. Never work from a
+  state that could not be generated.
 
-`STATE.md` y `log/INDEX.md` son **generados y no se versionan**. No los edites:
-tu cambio se pierde en el próximo render y no lo ve nadie.
+`STATE.md` and `log/INDEX.md` are **generated and not committed**. Do not edit
+them: your change is lost on the next render and nobody ever sees it.
 
-## Reglas duras
+## Hard rules
 
-Numeradas para poder citarlas en una revisión ("esto viola la regla 4").
+Numbered so they can be cited in a review ("this breaks rule 4").
 
-1. **Todo entra por PR.** Ningún agente commitea directo a la rama principal,
-   tampoco documentación. Sin excepciones por "es un cambio chico".
-2. **Nada de trabajo sin registrar.** Antes de tocar código, creá un fragmento
-   en `docs/agent/state/active/` que diga qué vas a hacer y **qué archivos vas a
-   tocar**. Antes de empezar, leé los demás fragments de `active/` para no
-   pisar a otra persona o agente.
-3. **Cerrar un ítem = borrar su archivo** de `state/`, más una entrada nueva en
-   `docs/agent/log/`. No se tacha ni se marca "CERRADO" dejando el texto.
-4. **Verificá antes de afirmar.** Antes de decir "listo", "arreglado" o "pasa",
-   corré el comando que lo demuestra y mirá la salida real. Si no lo corriste,
-   no lo digas.
-5. **Tests con cada cambio de comportamiento.** El test se escribe primero y se
-   ve fallar; un test que nunca falló no prueba nada.
-6. **No amplíes el alcance.** No "mejores" código adyacente, no agregues
-   dependencias sin justificarlas, no refactorices lo que no se rompió.
-7. **No saltees los hooks** (`--no-verify`) ni fuerces push. Si un hook falla,
-   arreglá la causa.
-8. **Los datos volátiles no se escriben.** SHAs, números de PR, listas de ramas:
-   se consultan con `git` / `gh` en el momento. Si lo escribís en un `.md`,
-   envejece y alguien decide con un dato falso.
-9. **Nada de datos de prueba en producción sin limpiar.** Si tenés que crearlos,
-   los borrás al terminar y verificás que quedaron borrados.
-10. **Ante la duda, preguntá.** Una pregunta cuesta minutos; una suposición
-    incorrecta descubierta después del merge, días.
+1. **Everything lands through a PR.** No agent commits straight to the main
+   branch, documentation included. No exceptions for "it is a small change".
+2. **No unregistered work.** Before touching code, create a fragment in
+   `docs/agent/state/active/` saying what you are about to do and **which files
+   you will touch**. Before you start, read the other `active/` fragments so you
+   do not collide with another person or agent.
+3. **Closing an item means deleting its file** from `state/`, plus a new entry
+   in `docs/agent/log/`. Never strike it through or mark it "DONE" in place.
+4. **Verify before you claim.** Before saying "done", "fixed" or "passing", run
+   the command that proves it and read the real output. If you did not run it,
+   do not say it.
+5. **Tests with every behaviour change.** Write the test first and watch it
+   fail; a test that never failed proves nothing.
+6. **Do not widen the scope.** No improving adjacent code, no new dependencies
+   without justifying them, no refactoring what is not broken.
+7. **Do not skip hooks** (`--no-verify`) and do not force-push. If a hook fails,
+   fix the cause.
+8. **Volatile facts are never written down.** SHAs, PR numbers, branch lists:
+   query them with `git` / `gh` at the moment of use. Written into a `.md` they
+   go stale, and somebody decides on a false fact.
+9. **No test data left in production.** If you must create some, delete it when
+   you are done and verify it is gone.
+10. **When in doubt, ask.** A question costs minutes; a wrong assumption found
+    after the merge costs days.
 
-## Al cerrar una sesión o un PR
+## Finishing a session or a PR
 
-En el **mismo PR** del cambio, nunca en un commit aparte:
+In the **same PR** as the change, never in a separate commit:
 
-1. Entrada nueva en `docs/agent/log/YYYY-MM-DD-<slug>.md`, con `summary:` en el
-   frontmatter (una oración: qué cambió y por qué importa).
-2. Actualizá `docs/agent/state/`: **borrá** el fragmento del ítem que cerraste,
-   creá los de lo que quedó pendiente. Un pendiente sin criterio de salida no lo
-   toma nadie: decí qué lo desbloquea.
-3. Volvé a correr `python scripts/render_state.py` y confirmá que sale 0.
+1. A new entry in `docs/agent/log/YYYY-MM-DD-<slug>.md`, with `summary:` in the
+   frontmatter (one sentence: what changed and why it matters).
+2. Update `docs/agent/state/`: **delete** the fragment for the item you closed,
+   create fragments for whatever is left open. A pending item with no exit
+   criterion is one nobody picks up — say what unblocks it.
+3. Run `python scripts/render_state.py` again and confirm it exits 0.
 
-**No dejes nada "para después del merge".** Todo paso diferido deja de hacerse:
-o viaja en este PR, o no existe. Si de verdad no puede hacerse ahora, va como
-fragmento en `pending/` con su criterio de salida — nunca como un comentario en
-el PR.
+**Leave nothing "for after the merge".** Every deferred step stops happening: it
+either travels in this PR or it does not exist. If it genuinely cannot be done
+now, it goes as a fragment in `pending/` with its exit criterion — never as a
+comment on the PR.
 
-## Comandos
+## Commands
 
-<!-- Reemplazá por los de tu stack. Deben ser los que corre CI, uno por línea. -->
+<!-- Replace with your stack's. These must be the ones CI runs, one per line. -->
 
 ```bash
-<comando de setup>          # instalar dependencias
-<comando de tests>          # suite
-<comando de lint>
-<comando de tipos>
-<comando de build>
+<setup command>            # install dependencies
+<test command>             # the suite
+<lint command>
+<type-check command>
+<build command>
 ```
 
-## Flujo de un cambio
+## How a change flows
 
 ```
-necesidad → spec/propuesta → [GATE 1: una persona aprueba]
-          → implementación (tests primero)
-          → revisión del propio diff
-          → PR → [GATE 2: una persona revisa] → merge
-          → [GATE 3: una persona autoriza el deploy]
+need → spec/proposal → [GATE 1: a human approves]
+     → implementation (tests first)
+     → review of your own diff
+     → PR → [GATE 2: a human reviews] → merge
+     → [GATE 3: a human authorises the deploy]
 ```
 
-Los gates los cruza una persona, nunca un agente. El **Gate 1 es el que más
-rinde con varios agentes en paralelo**: sin una propuesta aprobada, dos agentes
-resuelven el mismo problema en dos direcciones incompatibles.
+A human crosses the gates, never an agent. **Gate 1 is what pays off most with
+several agents in parallel**: without an approved proposal, two agents solve the
+same problem in two incompatible directions.
 
-Antes de pedir el Gate 2, revisá tu propio diff con ojo crítico y listá los
-hallazgos en el PR bajo `## Revisión previa`. Verificá cada hallazgo
-**ejecutándolo**, no leyéndolo.
+Before asking for Gate 2, review your own diff critically and list the findings
+in the PR under `## Self-review`. Confirm each finding by **running it**, not by
+reading.
 
-## Trabajo en paralelo
+## Working in parallel
 
-- Un agente, una rama, un worktree. **Un worktree es de alguien**: no lo borres
-  sin confirmar que su rama está pusheada.
-- Si un subagente tuyo tocó archivos compartidos, **verificá el diff vos mismo**
-  (`git diff --stat`). Un reporte de "quedó limpio" no es evidencia.
-- Si la rama principal avanzó, integrala (`git fetch && git merge origin/<main>`).
-  Eso actualiza tu rama; **no** te autoriza a pushear ni a mergear.
+- One agent, one branch, one worktree. **A worktree belongs to somebody**: do
+  not delete it without confirming its branch is pushed.
+- If a subagent of yours touched shared files, **check the diff yourself**
+  (`git diff --stat`). A report saying "the tree is clean" is not evidence.
+- If the main branch moved, integrate it (`git fetch && git merge origin/<main>`).
+  That updates your branch; it does **not** authorise you to push or merge.
 
-## Idioma
+## Language
 
-- Código, comentarios, commits, PRs: **inglés**.
-- Documentación de `docs/agent/` y conversación: **español**.
+- Code, comments, commits, PRs: **<English>**.
+- `docs/agent/` and conversation: **<English>**.
 
-## Estilo de commits
+## Commit style
 
-Conventional Commits con scope: `feat(api): add rate limiting`.
-Tipos: `feat`, `fix`, `chore`, `refactor`, `docs`, `test`, `ci`, `perf`.
+Conventional Commits with a scope: `feat(api): add rate limiting`.
+Types: `feat`, `fix`, `chore`, `refactor`, `docs`, `test`, `ci`, `perf`.

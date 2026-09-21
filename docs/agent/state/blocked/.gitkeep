@@ -1,2 +1,2 @@
-# Este directorio guarda ítems bloqueados en una persona o en infraestructura.
-# Un ítem acá NO lo puede destrabar un agente: decí en el cuerpo quién o qué falta.
+# Items blocked on a person or on infrastructure.
+# An agent cannot unblock these: say in the body who or what is missing.

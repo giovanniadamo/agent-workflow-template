@@ -1,8 +1,8 @@
-# Invariantes del proyecto: lo que casi nunca cambia.
-# Formato: clave: valor, una por línea. Nada de estructuras anidadas —
-# si necesitás más que esto, probablemente no va acá.
-project: <Nombre del proyecto>
-fase: <MVP | producción | mantenimiento>
+# Project invariants: what almost never changes.
+# Format: key: value, one per line. No nested structures - if you need more
+# than this, it probably does not belong here.
+project: <Project name>
+stage: <MVP | production | maintenance>
 repo: <org/repo>
-prod: <https://... o "todavía no">
-stack: <lenguaje y framework principal>
+prod: <https://... or "not yet">
+stack: <main language and framework>
