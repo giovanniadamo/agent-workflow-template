@@ -1,0 +1,2 @@
+# Normaliza a LF: devs en Windows + CI en Linux, sin guerras de formateo.
+* text=auto eol=lf

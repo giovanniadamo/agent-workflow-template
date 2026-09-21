@@ -1,0 +1,55 @@
+# Verifica el contrato de estado en cada PR.
+#
+# Esto es lo que hace que la convención se cumpla de verdad: un agente puede
+# ignorar AGENTS.md, pero no puede ignorar un check rojo. Si esta convención
+# importa, tiene un check; si no lo tiene, en dos meses nadie la sigue.
+name: agent-state
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # Sin dependencias: el generador es stdlib puro a propósito.
+      - name: Validar fragments y generar la vista
+        run: python scripts/render_state.py
+
+      # La vista es generada: si alguien la commitea, vuelven los conflictos
+      # que todo este diseño existe para evitar.
+      - name: Las vistas generadas no se versionan
+        run: |
+          for f in docs/agent/STATE.md docs/agent/log/INDEX.md; do
+            if git ls-files --error-unmatch "$f" >/dev/null 2>&1; then
+              echo "::error::$f está versionado. Sacalo del repo y dejalo en .gitignore."
+              exit 1
+            fi
+          done
+
+      # Un PR que toca código y no deja rastro en la memoria del proyecto es
+      # trabajo que el próximo agente no va a encontrar.
+      - name: Cada PR deja registro
+        if: github.event_name == 'pull_request'
+        run: |
+          BASE="origin/${{ github.base_ref }}"
+          git fetch --depth=1 origin "${{ github.base_ref }}"
+          CHANGED=$(git diff --name-only "$BASE"...HEAD)
+          if ! echo "$CHANGED" | grep -qE '^(src/|lib/|app/|backend/|frontend/)'; then
+            echo "PR sin cambios de código: no se exige entrada de log."
+            exit 0
+          fi
+          if echo "$CHANGED" | grep -qE '^docs/agent/log/[0-9]{4}-[0-9]{2}-[0-9]{2}-.*\.md$'; then
+            echo "OK: el PR trae entrada de log."
+            exit 0
+          fi
+          echo "::error::Este PR toca código y no agrega una entrada en docs/agent/log/."
+          echo "Ver AGENTS.md, seccion 'Al cerrar una sesion o un PR'."
+          exit 1

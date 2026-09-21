@@ -1,0 +1,5 @@
+# Vistas GENERADAS por scripts/render_state.py.
+# No se versionan a propósito: es lo que evita que dos ramas editen el mismo
+# archivo de estado. Si las agregás al repo, vuelven los conflictos.
+docs/agent/STATE.md
+docs/agent/log/INDEX.md
