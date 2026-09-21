@@ -34,22 +34,36 @@ jobs:
             fi
           done
 
-      # Un PR que toca código y no deja rastro en la memoria del proyecto es
-      # trabajo que el próximo agente no va a encontrar.
-      - name: Cada PR deja registro
+      # Un PR que toca codigo y no deja rastro en la memoria del proyecto es
+      # trabajo que el proximo agente no va a encontrar.
+      #
+      # La regla se define por NEGACION a proposito: "cambiaste algo que no es
+      # documentacion ni configuracion". Asi funciona en cualquier estructura de
+      # carpetas sin que nadie tenga que configurar una lista de rutas — que es
+      # justo el tipo de configuracion que nadie actualiza y termina volviendo
+      # el check inutil sin que se note.
+      - name: Cada PR con cambios reales deja registro
         if: github.event_name == 'pull_request'
         run: |
-          BASE="origin/${{ github.base_ref }}"
           git fetch --depth=1 origin "${{ github.base_ref }}"
-          CHANGED=$(git diff --name-only "$BASE"...HEAD)
-          if ! echo "$CHANGED" | grep -qE '^(src/|lib/|app/|backend/|frontend/)'; then
-            echo "PR sin cambios de código: no se exige entrada de log."
+          CHANGED=$(git diff --name-only "origin/${{ github.base_ref }}"...HEAD)
+
+          # Lo que NO cuenta como cambio real: docs, el propio estado del
+          # agente, y archivos de raiz tipo README/LICENSE/.gitignore.
+          REAL=$(echo "$CHANGED" | grep -vE '^(docs/|\.github/|[^/]*\.(md|txt|cfg|ini|toml|ya?ml|json|lock)$|\.[^/]*$)' || true)
+
+          if [ -z "$REAL" ]; then
+            echo "Sin cambios de codigo: no se exige entrada de log."
             exit 0
           fi
+
           if echo "$CHANGED" | grep -qE '^docs/agent/log/[0-9]{4}-[0-9]{2}-[0-9]{2}-.*\.md$'; then
             echo "OK: el PR trae entrada de log."
             exit 0
           fi
-          echo "::error::Este PR toca código y no agrega una entrada en docs/agent/log/."
+
+          echo "::error::Este PR cambia codigo y no agrega una entrada en docs/agent/log/."
+          echo "Archivos que lo disparan:"
+          echo "$REAL" | sed 's/^/  - /'
           echo "Ver AGENTS.md, seccion 'Al cerrar una sesion o un PR'."
           exit 1
