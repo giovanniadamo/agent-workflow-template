@@ -124,3 +124,13 @@ El esqueleto cubre el estado compartido. Cuando el proyecto crezca:
 - **Revisión del propio diff** antes de pedir revisión humana.
 - **Checks para cada convención que importe.** Sin verificación, una convención
   es una sugerencia.
+
+## Licencia
+
+MIT — usalo, copialo y adaptalo libremente, en proyectos propios o de tu empresa.
+
+## Contribuir
+
+Si lo usaste y algo no encajó en tu stack, un issue con el caso concreto vale
+más que una sugerencia general: este esqueleto salió de modos de falla reales,
+y así es como sigue creciendo.
